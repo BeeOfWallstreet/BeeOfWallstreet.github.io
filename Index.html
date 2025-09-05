@@ -1,1 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bee Themed Call Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Balsamiq Sans', cursive;
+            background-color: #fefce8; /* Light cream background */
+            background-image: radial-gradient(#fbbf24 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .hive-container, .metric-card {
+            background: white;
+            border: 4px solid #ca8a04; /* Amber-700 */
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05), 0 0 0 5px #fefce8, 0 0 0 8px #ca8a04;
+        }
+        .btn-add {
+            transition: all 0.2s ease-in-out;
+            border-bottom-width: 4px;
+        }
+        .btn-add:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+        .bee {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            z-index: 50;
+            pointer-events: none;
+            transition: all 1s ease-in-out;
+        }
+
+        /* Animation Keyframes */
+        @keyframes fly-to-new-hive {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(-50px, -200px) scale(0); opacity: 0; }
+        }
+        @keyframes fly-to-reattempt-hive {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(-50px, -200px) scale(0); opacity: 0; }
+        }
+
+        .animate-new {
+            animation: fly-to-new-hive 1s ease-in-out forwards;
+        }
+        .animate-reattempt {
+            animation: fly-to-reattempt-hive 1s ease-in-out forwards;
+        }
+
+        .tally-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #78350f; /* Amber-900 */
+        }
+        .tally-icon {
+            width: 32px;
+            height: 32px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="bg-yellow-50 text-amber-900 p-4 sm:p-6 lg:p-8">
+
+    <div id="animation-container" class="overflow-hidden absolute inset-0 pointer-events-none"></div>
+
+    <main class="max-w-7xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-5xl md:text-6xl font-bold text-amber-800 tracking-wider" style="text-shadow: 2px 2px 0 #fcd34d;">The Buzz Board</h1>
+            <p class="text-lg md:text-xl text-amber-700 mt-2">Track your call performance and make a bee-line to success!</p>
+        </header>
+
+        <!-- Hives Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mb-12">
+            
+            <!-- New List Hive -->
+            <div id="new-list-hive" class="hive-container rounded-3xl p-6 flex flex-col items-center">
+                <h2 class="text-3xl font-bold mb-4">New List Hive</h2>
+                <img id="new-list-hive-img" src="https://placehold.co/200x200/FBBF24/78350F?text=New+Hive" alt="New List Hive" class="w-48 h-48 mb-4">
+                
+                <!-- Tallies -->
+                <div class="w-full space-y-3 mb-6">
+                    <div class="tally-item bg-amber-100">
+                        <img id="worker-bee-icon-1" src="https://placehold.co/40x40/F59E0B/78350F?text=W" alt="Worker Bee" class="tally-icon rounded-full">
+                        <span>Calls Made (Dials):</span>
+                        <span id="new-dials" class="ml-auto text-2xl">0</span>
+                    </div>
+                    <div class="tally-item bg-amber-100">
+                        <img id="buff-bee-icon-1" src="https://placehold.co/40x40/F59E0B/78350F?text=B" alt="Buff Bee" class="tally-icon rounded-full">
+                        <span>Connections:</span>
+                        <span id="new-connections" class="ml-auto text-2xl">0</span>
+                    </div>
+                    <div class="tally-item bg-amber-100">
+                        <img id="queen-bee-icon-1" src="https://placehold.co/40x40/F59E0B/78350F?text=Q" alt="Queen Bee" class="tally-icon rounded-full">
+                        <span>Appointments Set:</span>
+                        <span id="new-appointments" class="ml-auto text-2xl">0</span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="grid grid-cols-3 gap-3 w-full">
+                    <button onclick="addBee('newList', 'dials', this)" class="btn-add bg-amber-400 border-amber-600 text-amber-900 font-bold py-2 px-4 rounded-lg hover:bg-amber-500">Add Dial</button>
+                    <button onclick="addBee('newList', 'connections', this)" class="btn-add bg-orange-400 border-orange-600 text-orange-900 font-bold py-2 px-4 rounded-lg hover:bg-orange-500">Add Connection</button>
+                    <button onclick="addBee('newList', 'appointments', this)" class="btn-add bg-yellow-300 border-yellow-500 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-400">Add Appointment</button>
+                </div>
+            </div>
+
+            <!-- Reattempting List Hive -->
+            <div id="reattempting-list-hive" class="hive-container rounded-3xl p-6 flex flex-col items-center">
+                <h2 class="text-3xl font-bold mb-4">Reattempting Hive</h2>
+                <img id="reattempting-list-hive-img" src="https://placehold.co/200x200/FBBF24/78350F?text=Reattempt+Hive" alt="Reattempting List Hive" class="w-48 h-48 mb-4">
+                
+                <!-- Tallies -->
+                <div class="w-full space-y-3 mb-6">
+                     <div class="tally-item bg-amber-100">
+                        <img id="worker-bee-icon-2" src="https://placehold.co/40x40/F59E0B/78350F?text=W" alt="Worker Bee" class="tally-icon rounded-full">
+                        <span>Calls Made (Dials):</span>
+                        <span id="reattempt-dials" class="ml-auto text-2xl">0</span>
+                    </div>
+                    <div class="tally-item bg-amber-100">
+                        <img id="buff-bee-icon-2" src="https://placehold.co/40x40/F59E0B/78350F?text=B" alt="Buff Bee" class="tally-icon rounded-full">
+                        <span>Connections:</span>
+                        <span id="reattempt-connections" class="ml-auto text-2xl">0</span>
+                    </div>
+                    <div class="tally-item bg-amber-100">
+                        <img id="queen-bee-icon-2" src="https://placehold.co/40x40/F59E0B/78350F?text=Q" alt="Queen Bee" class="tally-icon rounded-full">
+                        <span>Appointments Set:</span>
+                        <span id="reattempt-appointments" class="ml-auto text-2xl">0</span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                 <div class="grid grid-cols-3 gap-3 w-full">
+                    <button onclick="addBee('reattemptingList', 'dials', this)" class="btn-add bg-amber-400 border-amber-600 text-amber-900 font-bold py-2 px-4 rounded-lg hover:bg-amber-500">Add Dial</button>
+                    <button onclick="addBee('reattemptingList', 'connections', this)" class="btn-add bg-orange-400 border-orange-600 text-orange-900 font-bold py-2 px-4 rounded-lg hover:bg-orange-500">Add Connection</button>
+                    <button onclick="addBee('reattemptingList', 'appointments', this)" class="btn-add bg-yellow-300 border-yellow-500 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-400">Add Appointment</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier 2 Metric Shower -->
+        <div class="text-center mb-10">
+            <h2 class="text-4xl font-bold text-amber-800">Metric Shower</h2>
+            <p class="text-lg text-amber-700 mt-1">Key effectiveness and efficiency ratios.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dial-to-Connection Rate -->
+            <div class="metric-card rounded-2xl p-6 text-center">
+                <h3 class="text-xl font-bold mb-2">Dial-to-Connection Rate</h3>
+                <p class="text-base text-amber-600 mb-4">(Connections / Dials)</p>
+                <div class="flex justify-around">
+                    <div>
+                        <p class="font-bold">New</p>
+                        <p id="metric-dc-new" class="text-4xl font-bold text-sky-600">0%</p>
+                    </div>
+                    <div>
+                        <p class="font-bold">Reattempt</p>
+                        <p id="metric-dc-reattempt" class="text-4xl font-bold text-teal-600">0%</p>
+                    </div>
+                </div>
+            </div>
+             <!-- Connection-to-Appointment Rate -->
+            <div class="metric-card rounded-2xl p-6 text-center">
+                <h3 class="text-xl font-bold mb-2">Connection-to-Appointment</h3>
+                <p class="text-base text-amber-600 mb-4">(Appointments / Connections)</p>
+                 <div class="flex justify-around">
+                    <div>
+                        <p class="font-bold">New</p>
+                        <p id="metric-ca-new" class="text-4xl font-bold text-sky-600">0%</p>
+                    </div>
+                    <div>
+                        <p class="font-bold">Reattempt</p>
+                        <p id="metric-ca-reattempt" class="text-4xl font-bold text-teal-600">0%</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Dial-to-Appointment Rate -->
+            <div class="metric-card rounded-2xl p-6 text-center md:col-span-2 lg:col-span-1">
+                <h3 class="text-xl font-bold mb-2">Dial-to-Appointment Rate</h3>
+                <p class="text-base text-amber-600 mb-4">(Appointments / Dials)</p>
+                <div class="flex justify-around">
+                    <div>
+                        <p class="font-bold">New</p>
+                        <p id="metric-da-new" class="text-4xl font-bold text-sky-600">0%</p>
+                    </div>
+                    <div>
+                        <p class="font-bold">Reattempt</p>
+                        <p id="metric-da-reattempt" class="text-4xl font-bold text-teal-600">0%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- CONFIGURATION: PASTE YOUR IMAGE URLS HERE ---
+        const workerBeeUrl = 'https://placehold.co/50x50/F59E0B/000000?text=W'; // Represents a Dial
+        const buffBeeUrl = 'https://placehold.co/50x50/FB923C/000000?text=B';   // Represents a Connection
+        const queenBeeUrl = 'https://placehold.co/50x50/FDE047/000000?text=Q';  // Represents an Appointment
+        const hiveUrl = 'https://placehold.co/200x200/FBBF24/78350F?text=Hive'; // A generic hive image
+        // ----------------------------------------------------
+
+        // Set initial images from config
+        document.getElementById('new-list-hive-img').src = hiveUrl;
+        document.getElementById('reattempting-list-hive-img').src = hiveUrl;
+        document.getElementById('worker-bee-icon-1').src = workerBeeUrl.replace('50x50', '40x40');
+        document.getElementById('worker-bee-icon-2').src = workerBeeUrl.replace('50x50', '40x40');
+        document.getElementById('buff-bee-icon-1').src = buffBeeUrl.replace('50x50', '40x40');
+        document.getElementById('buff-bee-icon-2').src = buffBeeUrl.replace('50x50', '40x40');
+        document.getElementById('queen-bee-icon-1').src = queenBeeUrl.replace('50x50', '40x40');
+        document.getElementById('queen-bee-icon-2').src = queenBeeUrl.replace('50x50', '40x40');
+
+        const state = {
+            newList: { dials: 0, connections: 0, appointments: 0 },
+            reattemptingList: { dials: 0, connections: 0, appointments: 0 }
+        };
+
+        const beeTypeToUrl = {
+            dials: workerBeeUrl,
+            connections: buffBeeUrl,
+            appointments: queenBeeUrl
+        };
+
+        function addBee(listType, beeType, buttonElement) {
+            // 1. Update state
+            state[listType][beeType]++;
+
+            // 2. Create and animate the bee
+            const bee = document.createElement('img');
+            bee.src = beeTypeToUrl[beeType];
+            bee.className = 'bee';
+            
+            const rect = buttonElement.getBoundingClientRect();
+            bee.style.left = `${rect.left + window.scrollX + (rect.width / 2) - 25}px`;
+            bee.style.top = `${rect.top + window.scrollY + (rect.height / 2) - 25}px`;
+
+            const hiveImg = document.getElementById(listType === 'newList' ? 'new-list-hive-img' : 'reattempting-list-hive-img');
+            const hiveRect = hiveImg.getBoundingClientRect();
+            const targetX = hiveRect.left + window.scrollX + (hiveRect.width / 2) - (rect.left + window.scrollX + (rect.width / 2));
+            const targetY = hiveRect.top + window.scrollY + (hiveRect.height / 2) - (rect.top + window.scrollY + (rect.height / 2));
+
+            // Create a dynamic keyframe for precise animation
+            const styleSheet = document.styleSheets[0];
+            const animationName = `fly-to-${listType}-${Date.now()}`;
+            const keyframes = `
+                @keyframes ${animationName} {
+                    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+                    100% { transform: translate(${targetX}px, ${targetY}px) scale(0.2); opacity: 0; }
+                }`;
+            styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+
+            bee.style.animation = `${animationName} 1s ease-in forwards`;
+
+            document.body.appendChild(bee);
+
+            setTimeout(() => {
+                bee.remove();
+                // Clean up the created keyframe rule after animation to prevent stylesheet bloat
+                for (let i = 0; i < styleSheet.cssRules.length; i++) {
+                    if (styleSheet.cssRules[i].name === animationName) {
+                        styleSheet.deleteRule(i);
+                        break;
+                    }
+                }
+            }, 1000);
+
+            // 3. Update displays
+            updateTallies();
+            updateMetrics();
+        }
+
+        function updateTallies() {
+            document.getElementById('new-dials').textContent = state.newList.dials;
+            document.getElementById('new-connections').textContent = state.newList.connections;
+            document.getElementById('new-appointments').textContent = state.newList.appointments;
+
+            document.getElementById('reattempt-dials').textContent = state.reattemptingList.dials;
+            document.getElementById('reattempt-connections').textContent = state.reattemptingList.connections;
+            document.getElementById('reattempt-appointments').textContent = state.reattemptingList.appointments;
+        }
+
+        function calculateRate(numerator, denominator) {
+            if (denominator === 0) {
+                return '0.0%';
+            }
+            return ((numerator / denominator) * 100).toFixed(1) + '%';
+        }
+
+        function updateMetrics() {
+            // New List Metrics
+            const nl = state.newList;
+            document.getElementById('metric-dc-new').textContent = calculateRate(nl.connections, nl.dials);
+            document.getElementById('metric-ca-new').textContent = calculateRate(nl.appointments, nl.connections);
+            document.getElementById('metric-da-new').textContent = calculateRate(nl.appointments, nl.dials);
+
+            // Reattempting List Metrics
+            const rl = state.reattemptingList;
+            document.getElementById('metric-dc-reattempt').textContent = calculateRate(rl.connections, rl.dials);
+            document.getElementById('metric-ca-reattempt').textContent = calculateRate(rl.appointments, rl.connections);
+            document.getElementById('metric-da-reattempt').textContent = calculateRate(rl.appointments, rl.dials);
+        }
+
+        // Initial render
+        window.onload = () => {
+            updateTallies();
+            updateMetrics();
+        }
+    </script>
+</body>
+</html>
+
 
