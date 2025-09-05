@@ -14,6 +14,7 @@
             background-color: #fefce8; /* Light cream background */
             background-image: radial-gradient(#fbbf24 1px, transparent 1px);
             background-size: 20px 20px;
+            touch-action: manipulation;
         }
         .hive-container, .metric-card {
             background: white;
@@ -28,32 +29,6 @@
             transform: translateY(2px);
             border-bottom-width: 2px;
         }
-        .bee {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            z-index: 50;
-            pointer-events: none;
-            transition: all 1s ease-in-out;
-        }
-
-        /* Animation Keyframes */
-        @keyframes fly-to-new-hive {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(-50px, -200px) scale(0); opacity: 0; }
-        }
-        @keyframes fly-to-reattempt-hive {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(-50px, -200px) scale(0); opacity: 0; }
-        }
-
-        .animate-new {
-            animation: fly-to-new-hive 1s ease-in-out forwards;
-        }
-        .animate-reattempt {
-            animation: fly-to-reattempt-hive 1s ease-in-out forwards;
-        }
-
         .tally-item {
             display: flex;
             align-items: center;
@@ -63,16 +38,91 @@
             font-weight: bold;
             color: #78350f; /* Amber-900 */
         }
+        
+        /* --- New Beehive & Bee Styles --- */
+        .beehive {
+            position: relative;
+            margin-bottom: 1rem;
+            width: 150px;
+            height: 150px;
+            background-color: #FBBF24; /* amber-400 */
+            border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), inset 0 -5px 10px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .beehive::before {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #1E293B; /* slate-800 */
+            border-radius: 50%;
+            top: 55%;
+            box-shadow: inset 0 3px 5px rgba(0,0,0,0.5);
+        }
+
+        .flying-bee {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s 1s linear;
+            z-index: 50;
+        }
+
+        .flying-bee::before,
+        .flying-bee::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background-color: rgba(226, 232, 240, 0.8);
+            border-radius: 50% 50% 0 50%;
+            top: -7px;
+            z-index: -1;
+            animation: flap 0.1s infinite alternate;
+        }
+
+        .flying-bee::before {
+            left: -5px;
+            transform: rotate(-30deg);
+        }
+
+        .flying-bee::after {
+            right: -5px;
+            transform: rotate(30deg);
+            animation-delay: 0.05s;
+        }
+        
+        @keyframes flap {
+            from { transform: scaleY(1); }
+            to { transform: scaleY(1.1); }
+        }
+
+        /* Bee Type Colors */
+        .worker-bee { background-color: #f59e0b; } /* Dials - amber-500 */
+        .buff-bee { background-color: #fb923c; }   /* Connections - orange-400 */
+        .queen-bee { background-color: #fde047; }  /* Appointments - yellow-300 */
+
+        .fly-in {
+            transform: translate(var(--translateX), var(--translateY)) scale(0.5);
+            opacity: 0;
+        }
+
         .tally-icon {
-            width: 32px;
-            height: 32px;
-            margin-right: 8px;
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid #a16207;
         }
     </style>
 </head>
 <body class="bg-yellow-50 text-amber-900 p-4 sm:p-6 lg:p-8">
-
-    <div id="animation-container" class="overflow-hidden absolute inset-0 pointer-events-none"></div>
 
     <main class="max-w-7xl mx-auto">
         <header class="text-center mb-10">
@@ -86,22 +136,22 @@
             <!-- New List Hive -->
             <div id="new-list-hive" class="hive-container rounded-3xl p-6 flex flex-col items-center">
                 <h2 class="text-3xl font-bold mb-4">New List Hive</h2>
-                <img id="new-list-hive-img" src="https://placehold.co/200x200/FBBF24/78350F?text=New+Hive" alt="New List Hive" class="w-48 h-48 mb-4">
+                <div id="new-list-hive-target" class="beehive"></div>
                 
                 <!-- Tallies -->
                 <div class="w-full space-y-3 mb-6">
                     <div class="tally-item bg-amber-100">
-                        <img id="worker-bee-icon-1" src="https://placehold.co/40x40/F59E0B/78350F?text=W" alt="Worker Bee" class="tally-icon rounded-full">
+                        <div class="tally-icon worker-bee"></div>
                         <span>Calls Made (Dials):</span>
                         <span id="new-dials" class="ml-auto text-2xl">0</span>
                     </div>
                     <div class="tally-item bg-amber-100">
-                        <img id="buff-bee-icon-1" src="https://placehold.co/40x40/F59E0B/78350F?text=B" alt="Buff Bee" class="tally-icon rounded-full">
+                        <div class="tally-icon buff-bee"></div>
                         <span>Connections:</span>
                         <span id="new-connections" class="ml-auto text-2xl">0</span>
                     </div>
                     <div class="tally-item bg-amber-100">
-                        <img id="queen-bee-icon-1" src="https://placehold.co/40x40/F59E0B/78350F?text=Q" alt="Queen Bee" class="tally-icon rounded-full">
+                        <div class="tally-icon queen-bee"></div>
                         <span>Appointments Set:</span>
                         <span id="new-appointments" class="ml-auto text-2xl">0</span>
                     </div>
@@ -118,22 +168,22 @@
             <!-- Reattempting List Hive -->
             <div id="reattempting-list-hive" class="hive-container rounded-3xl p-6 flex flex-col items-center">
                 <h2 class="text-3xl font-bold mb-4">Reattempting Hive</h2>
-                <img id="reattempting-list-hive-img" src="https://placehold.co/200x200/FBBF24/78350F?text=Reattempt+Hive" alt="Reattempting List Hive" class="w-48 h-48 mb-4">
+                <div id="reattempting-list-hive-target" class="beehive"></div>
                 
                 <!-- Tallies -->
                 <div class="w-full space-y-3 mb-6">
                      <div class="tally-item bg-amber-100">
-                        <img id="worker-bee-icon-2" src="https://placehold.co/40x40/F59E0B/78350F?text=W" alt="Worker Bee" class="tally-icon rounded-full">
+                        <div class="tally-icon worker-bee"></div>
                         <span>Calls Made (Dials):</span>
                         <span id="reattempt-dials" class="ml-auto text-2xl">0</span>
                     </div>
                     <div class="tally-item bg-amber-100">
-                        <img id="buff-bee-icon-2" src="https://placehold.co/40x40/F59E0B/78350F?text=B" alt="Buff Bee" class="tally-icon rounded-full">
+                        <div class="tally-icon buff-bee"></div>
                         <span>Connections:</span>
                         <span id="reattempt-connections" class="ml-auto text-2xl">0</span>
                     </div>
                     <div class="tally-item bg-amber-100">
-                        <img id="queen-bee-icon-2" src="https://placehold.co/40x40/F59E0B/78350F?text=Q" alt="Queen Bee" class="tally-icon rounded-full">
+                        <div class="tally-icon queen-bee"></div>
                         <span>Appointments Set:</span>
                         <span id="reattempt-appointments" class="ml-auto text-2xl">0</span>
                     </div>
@@ -162,11 +212,11 @@
                 <div class="flex justify-around">
                     <div>
                         <p class="font-bold">New</p>
-                        <p id="metric-dc-new" class="text-4xl font-bold text-sky-600">0%</p>
+                        <p id="metric-dc-new" class="text-4xl font-bold text-sky-600">0.0%</p>
                     </div>
                     <div>
                         <p class="font-bold">Reattempt</p>
-                        <p id="metric-dc-reattempt" class="text-4xl font-bold text-teal-600">0%</p>
+                        <p id="metric-dc-reattempt" class="text-4xl font-bold text-teal-600">0.0%</p>
                     </div>
                 </div>
             </div>
@@ -177,11 +227,11 @@
                  <div class="flex justify-around">
                     <div>
                         <p class="font-bold">New</p>
-                        <p id="metric-ca-new" class="text-4xl font-bold text-sky-600">0%</p>
+                        <p id="metric-ca-new" class="text-4xl font-bold text-sky-600">0.0%</p>
                     </div>
                     <div>
                         <p class="font-bold">Reattempt</p>
-                        <p id="metric-ca-reattempt" class="text-4xl font-bold text-teal-600">0%</p>
+                        <p id="metric-ca-reattempt" class="text-4xl font-bold text-teal-600">0.0%</p>
                     </div>
                 </div>
             </div>
@@ -192,11 +242,11 @@
                 <div class="flex justify-around">
                     <div>
                         <p class="font-bold">New</p>
-                        <p id="metric-da-new" class="text-4xl font-bold text-sky-600">0%</p>
+                        <p id="metric-da-new" class="text-4xl font-bold text-sky-600">0.0%</p>
                     </div>
                     <div>
                         <p class="font-bold">Reattempt</p>
-                        <p id="metric-da-reattempt" class="text-4xl font-bold text-teal-600">0%</p>
+                        <p id="metric-da-reattempt" class="text-4xl font-bold text-teal-600">0.0%</p>
                     </div>
                 </div>
             </div>
@@ -205,32 +255,15 @@
     </main>
 
     <script>
-        // --- CONFIGURATION: PASTE YOUR IMAGE URLS HERE ---
-        const workerBeeUrl = 'https://placehold.co/50x50/F59E0B/000000?text=W'; // Represents a Dial
-        const buffBeeUrl = 'https://placehold.co/50x50/FB923C/000000?text=B';   // Represents a Connection
-        const queenBeeUrl = 'https://placehold.co/50x50/FDE047/000000?text=Q';  // Represents an Appointment
-        const hiveUrl = 'https://placehold.co/200x200/FBBF24/78350F?text=Hive'; // A generic hive image
-        // ----------------------------------------------------
-
-        // Set initial images from config
-        document.getElementById('new-list-hive-img').src = hiveUrl;
-        document.getElementById('reattempting-list-hive-img').src = hiveUrl;
-        document.getElementById('worker-bee-icon-1').src = workerBeeUrl.replace('50x50', '40x40');
-        document.getElementById('worker-bee-icon-2').src = workerBeeUrl.replace('50x50', '40x40');
-        document.getElementById('buff-bee-icon-1').src = buffBeeUrl.replace('50x50', '40x40');
-        document.getElementById('buff-bee-icon-2').src = buffBeeUrl.replace('50x50', '40x40');
-        document.getElementById('queen-bee-icon-1').src = queenBeeUrl.replace('50x50', '40x40');
-        document.getElementById('queen-bee-icon-2').src = queenBeeUrl.replace('50x50', '40x40');
-
         const state = {
             newList: { dials: 0, connections: 0, appointments: 0 },
             reattemptingList: { dials: 0, connections: 0, appointments: 0 }
         };
 
-        const beeTypeToUrl = {
-            dials: workerBeeUrl,
-            connections: buffBeeUrl,
-            appointments: queenBeeUrl
+        const beeTypeToClass = {
+            dials: 'worker-bee',
+            connections: 'buff-bee',
+            appointments: 'queen-bee'
         };
 
         function addBee(listType, beeType, buttonElement) {
@@ -238,43 +271,41 @@
             state[listType][beeType]++;
 
             // 2. Create and animate the bee
-            const bee = document.createElement('img');
-            bee.src = beeTypeToUrl[beeType];
-            bee.className = 'bee';
+            const bee = document.createElement('div');
+            bee.className = 'flying-bee';
+            bee.classList.add(beeTypeToClass[beeType]);
             
-            const rect = buttonElement.getBoundingClientRect();
-            bee.style.left = `${rect.left + window.scrollX + (rect.width / 2) - 25}px`;
-            bee.style.top = `${rect.top + window.scrollY + (rect.height / 2) - 25}px`;
+            const startRect = buttonElement.getBoundingClientRect();
+            bee.style.left = `${startRect.left + window.scrollX + (startRect.width / 2) - 14}px`;
+            bee.style.top = `${startRect.top + window.scrollY + (startRect.height / 2) - 14}px`;
 
-            const hiveImg = document.getElementById(listType === 'newList' ? 'new-list-hive-img' : 'reattempting-list-hive-img');
-            const hiveRect = hiveImg.getBoundingClientRect();
-            const targetX = hiveRect.left + window.scrollX + (hiveRect.width / 2) - (rect.left + window.scrollX + (rect.width / 2));
-            const targetY = hiveRect.top + window.scrollY + (hiveRect.height / 2) - (rect.top + window.scrollY + (rect.height / 2));
+            const hiveEl = document.getElementById(listType === 'newList' ? 'new-list-hive-target' : 'reattempting-list-hive-target');
+            const hiveRect = hiveEl.getBoundingClientRect();
+            
+            // Target the hive's entrance (center of the dark circle)
+            const destinationX = hiveRect.left + window.scrollX + (hiveRect.width / 2);
+            const destinationY = hiveRect.top + window.scrollY + (hiveRect.height * 0.6); // ~60% down the hive
 
-            // Create a dynamic keyframe for precise animation
-            const styleSheet = document.styleSheets[0];
-            const animationName = `fly-to-${listType}-${Date.now()}`;
-            const keyframes = `
-                @keyframes ${animationName} {
-                    0% { transform: translate(0, 0) scale(1); opacity: 1; }
-                    100% { transform: translate(${targetX}px, ${targetY}px) scale(0.2); opacity: 0; }
-                }`;
-            styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+            const startX = startRect.left + window.scrollX + startRect.width / 2;
+            const startY = startRect.top + window.scrollY + startRect.height / 2;
 
-            bee.style.animation = `${animationName} 1s ease-in forwards`;
+            const translateX = destinationX - startX;
+            const translateY = destinationY - startY;
 
+            bee.style.setProperty('--translateX', `${translateX}px`);
+            bee.style.setProperty('--translateY', `${translateY}px`);
+            
             document.body.appendChild(bee);
 
-            setTimeout(() => {
+            // Add a tiny delay to ensure the browser registers the element before adding the animation class
+            requestAnimationFrame(() => {
+                bee.classList.add('fly-in');
+            });
+
+            // After the transition ends, remove the bee
+            bee.addEventListener('transitionend', () => {
                 bee.remove();
-                // Clean up the created keyframe rule after animation to prevent stylesheet bloat
-                for (let i = 0; i < styleSheet.cssRules.length; i++) {
-                    if (styleSheet.cssRules[i].name === animationName) {
-                        styleSheet.deleteRule(i);
-                        break;
-                    }
-                }
-            }, 1000);
+            }, { once: true });
 
             // 3. Update displays
             updateTallies();
@@ -320,5 +351,7 @@
     </script>
 </body>
 </html>
+
+
 
 
